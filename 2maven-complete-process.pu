@@ -1,0 +1,73 @@
+@startuml
+!theme crt-green
+
+skinparam component {
+    BackgroundColor<<Backend>> #222222
+    BackgroundColor<<Frontend>> #333333
+    BackgroundColor<<Maven>> #444444
+    FontColor white
+    BorderColor lightgray
+    FontSize 12
+}
+skinparam databaseBackgroundColor #555555
+skinparam databaseBorderColor lightgray
+skinparam databaseFontColor white
+
+actor Developer
+
+rectangle "Angular App" <<Frontend>> {
+    component "Angular Component" as AngularComponent
+    component "Angular Service" as AngularService
+}
+
+rectangle "Spring Boot Backend" <<Backend>> {
+    component "Spring Security (KeycloakAdapter)" as KeycloakAdapter
+    component "Spring REST Controller" as SpringController
+    component "Service Layer" as ServiceLayer
+    component "Repository Layer (Spring Data JPA)" as RepositoryLayer
+    database "Database" as DB
+}
+
+rectangle "Maven Build" <<Maven>> {
+    component "pom.xml" as PomXml
+    component "Maven Compiler" as MavenCompiler
+    component "Maven Test" as MavenTest
+    component "Maven Package" as MavenPackage
+}
+
+Developer --> PomXml : <color:blue>1</color> Defines Dependencies
+PomXml --> MavenCompiler : <color:blue>2</color> Fetches Dependencies
+MavenCompiler --> "Spring Boot Backend" : <color:blue>3</color> Compiles Java Code
+
+Developer --> MavenTest : <color:blue>4</color> Runs mvn test
+MavenTest --> "Spring Boot Backend" : <color:blue>5</color> Executes Unit & Integration Tests
+
+Developer --> MavenPackage : <color:blue>6</color> Runs mvn package
+MavenPackage --> "Spring Boot Backend" : <color:blue>7</color> Generates JAR/WAR File
+
+MavenPackage --> "Deploy Server (e.g., docker, tomcat, local)" : <color:blue>8</color> Deploys Spring Boot JAR
+
+' Frontend Build
+Developer --> AngularComponent : <color:blue>9</color> Writes Angular Code
+AngularComponent --> AngularService : <color:blue>10</color> Calls API
+Developer --> "Angular CLI" : <color:blue>11</color> Runs ng build
+"Angular CLI" --> "dist Folder" : <color:blue>12</color> Generates Frontend Build
+
+' Connecting Angular with Backend
+AngularService --> KeycloakAdapter : <color:blue>13</color> Sends HTTP Request (Authentication)
+KeycloakAdapter --> Keycloak : <color:blue>14</color> Validates User
+Keycloak --> KeycloakAdapter : <color:blue>15</color> Returns Authentication
+KeycloakAdapter --> SpringController : <color:blue>16</color> Passes Request
+SpringController --> ServiceLayer : <color:blue>17</color> Calls Business Logic
+ServiceLayer --> RepositoryLayer : <color:blue>18</color> Fetches Data
+RepositoryLayer --> DB : <color:blue>19</color> Queries Database
+DB --> RepositoryLayer : <color:blue>20</color> Returns Data
+RepositoryLayer --> ServiceLayer : <color:blue>21</color> Returns Data
+ServiceLayer --> SpringController : <color:blue>22</color> Returns Processed Data
+SpringController --> "JSON Converter (Jackson)" : <color:blue>22.1</color> Converts Data to JSON
+"JSON Converter (Jackson)" --> AngularService : <color:blue>22.2</color> Sends HTTP Response
+SpringController --> AngularService : <color:blue>23</color> Sends Response
+AngularService --> AngularComponent : <color:blue>24</color> Updates UI
+AngularComponent --> Developer : <color:blue>25</color> Displays Data
+
+@enduml
